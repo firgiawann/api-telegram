@@ -1,4 +1,4 @@
-# 🚀 Kuota Awan Bot API — Vercel
+# 🚀 Kuota Awan Bot API — Vercel + Supabase
 
 API serverless untuk bot Telegram @KuotaAwanBot.
 Token bot AMAN di server, tidak pernah muncul di frontend lagi.
@@ -16,30 +16,30 @@ Vercel Serverless Functions
    ├─ api/canva-stock.js    → GET stok / PUT set stok (admin)
    └─ api/webhook.js        → terima perintah dari chat bot kamu
    │
-   ├─ Vercel KV (Upstash): simpan link Canva, history, stok
+   ├─ Supabase (Postgres): tabel settings + canva_history
    └─ Telegram Bot API (token hanya di sini)
 ```
 
 ## Langkah 1 — Deploy API ke Vercel
 
 **Cara A (dashboard, tanpa install):**
-1. Buat repo GitHub baru (mis. `kuota-awan-bot-api`) → upload isi folder ini
-2. Buka https://vercel.com/new → Import repo itu → Deploy
+1. Repo ini sudah ada di GitHub → buka https://vercel.com/new → Import `api-telegram` → Deploy
 
 **Cara B (CLI):**
 ```bash
-cd kuota-awan-bot-api
+git clone https://github.com/firgiawann/api-telegram.git
+cd api-telegram
 npm i -g vercel
 vercel login
 vercel --prod
 ```
 
-## Langkah 2 — Buat KV store
+## Langkah 2 — Siapkan Supabase (2 tabel)
 
-1. Vercel dashboard → **Storage** → **Create Database** → **Vercel KV (Upstash)**
-2. Pilih region terdekat (Singapore/IAD1)
-3. Klik **Connect to Project** → pilih project API kamu
-   → env `KV_REST_API_URL` & `KV_REST_API_TOKEN` terisi otomatis
+1. Buka project Supabase kamu → **SQL Editor** → **New query**
+2. Paste isi **`supabase.sql`** → **Run**
+   - Membuat tabel `settings` (key-value) & `canva_history` (riwayat)
+   - Mengisi default link & stok (ganti link-nya dulu di file kalau perlu)
 
 ## Langkah 3 — Set Environment Variables
 
@@ -51,7 +51,11 @@ Vercel → Project → Settings → Environment Variables:
 | `TELEGRAM_CHAT_ID` | `2010496733` |
 | `ADMIN_SECRET` | `openssl rand -hex 32` (untuk update via API) |
 | `WEBHOOK_SECRET` | `openssl rand -hex 16` (verifikasi webhook) |
+| `SUPABASE_URL` | `https://<ref>.supabase.co` (Project Settings → API) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (Project Settings → API — RAHASIA) |
 | `CANVA_DEFAULT_LINK` | Link Canva lama kamu (fallback) |
+
+⚠️ `SUPABASE_SERVICE_ROLE_KEY` **hanya** untuk server (env Vercel). Jangan pernah taruh di frontend.
 
 → Redeploy setelah set (Deployments → ⋯ → Redeploy).
 

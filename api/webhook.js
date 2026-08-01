@@ -14,7 +14,7 @@
 // Setup webhook (sekali saja, dengan token bot):
 //   curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://<PROJECT>.vercel.app/api/webhook&secret_token=<WEBHOOK_SECRET>&allowed_updates=[\"message\"]"
 // ============================================================
-import { kvGet, kvSet, kvPush } from "./_lib/kv.js";
+import { dbGet, dbSet, dbHistory, dbHistoryList } from "./_lib/db.js";
 import { tgSendMessage } from "./_lib/telegram.js";
 
 export const config = { runtime: "nodejs" };
@@ -30,7 +30,13 @@ export default async function handler(req, res) {
     }
   }
 
-  const update = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+  let update;
+  try {
+    update = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+  } catch {
+    return res.status(400).json({ ok: false, error: "Invalid JSON" });
+  }
+
   const msg = update?.message;
   if (!msg?.text) return res.status(200).json({ ok: true }); // abaikan non-text
 
@@ -47,7 +53,7 @@ export default async function handler(req, res) {
 
   try {
     if (text === "/link" || text === "/link@KuotaAwanBot") {
-      const link = (await kvGet("canva:link")) || process.env.CANVA_DEFAULT_LINK || "(belum ada)";
+      const link = (await dbGet("canva_link")) || process.env.CANVA_DEFAULT_LINK || "(belum ada)";
       await reply(`🔗 *Link Canva Aktif:*\n\n${link}`);
 
     } else if (text.startsWith("/setlink") || text.startsWith("/setlink@KuotaAwanBot")) {
@@ -55,31 +61,27 @@ export default async function handler(req, res) {
       if (!/^https?:\/\/.+/.test(link)) {
         await reply("⚠️ Format: `/setlink https://www.canva.com/...`");
       } else {
-        await kvSet("canva:link", link);
-        await kvPush("canva:history", {
-          link,
-          at: new Date().toISOString(),
-          by: "telegram",
-        }, 50);
+        await dbSet("canva_link", link);
+        await dbHistory(link, "telegram");
         await reply(`✅ *Link Canva Diupdate!*\n\n${link}\n\nSekarang frontend otomatis pakai link baru ini.`);
       }
 
     } else if (text === "/history" || text === "/history@KuotaAwanBot") {
-      const history = (await kvGet("canva:history")) || [];
+      const history = await dbHistoryList(5);
       if (!history.length) {
         await reply("📭 Belum ada riwayat update.");
       } else {
-        const lines = history.slice(0, 5).map(
-          (h, i) => `${i + 1}. ${h.link}\n   _(${new Date(h.at).toLocaleString("id-ID")})_`
+        const lines = history.map(
+          (h, i) => `${i + 1}. ${h.link}\n   _(${new Date(h.created_at).toLocaleString("id-ID")})_`
         );
         await reply(`🗂 *Riwayat Update Link:*\n\n${lines.join("\n")}`);
       }
 
     } else if (text === "/status" || text === "/status@KuotaAwanBot") {
-      const stock = (await kvGet("canva:stock")) ?? "—";
-      const history = (await kvGet("canva:history")) || [];
+      const rawStock = (await dbGet("canva_stock")) ?? "—";
+      const history = await dbHistoryList(100);
       await reply(
-        `📊 *Status Bot*\n\n▪️ Webhook: aktif\n▪️ Stok tersisa: ${stock}\n▪️ Total update link: ${history.length}\n▪️ Admin chat: ${adminId}`
+        `📊 *Status Bot*\n\n▪️ Webhook: aktif\n▪️ Stok tersisa: ${rawStock}\n▪️ Total update link: ${history.length}\n▪️ Admin chat: ${adminId}`
       );
 
     } else {

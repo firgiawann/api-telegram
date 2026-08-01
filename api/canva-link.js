@@ -4,7 +4,7 @@
 // PUT  → admin: update link Canva (butuh header Authorization:
 //        Bearer <ADMIN_SECRET>), simpan history, notif ke Telegram
 // ============================================================
-import { kvGet, kvSet, kvPush } from "./_lib/kv.js";
+import { dbGet, dbSet, dbHistory } from "./_lib/db.js";
 import { tgSendMessage } from "./_lib/telegram.js";
 
 export const config = { runtime: "nodejs" };
@@ -20,8 +20,12 @@ export default async function handler(req, res) {
 
   // ---------- GET: ambil link aktif ----------
   if (req.method === "GET") {
-    const link = (await kvGet("canva:link")) || DEFAULT_LINK;
-    return res.status(200).json({ ok: true, link });
+    try {
+      const link = (await dbGet("canva_link")) || DEFAULT_LINK;
+      return res.status(200).json({ ok: true, link });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
   }
 
   // ---------- PUT: update link (admin only) ----------
@@ -44,24 +48,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "link harus URL valid (http/https)" });
     }
 
-    await kvSet("canva:link", link);
-    await kvPush("canva:history", {
-      link,
-      at: new Date().toISOString(),
-      by: "api",
-    }, 50);
-
-    // Notif ke Telegram admin
     try {
-      await tgSendMessage(
-        process.env.TELEGRAM_CHAT_ID,
-        `🔄 *Link Canva Diupdate*\n\n${link}\n\n_oleh: API (admin)_`
-      );
-    } catch {
-      // notif gagal tidak menggagalkan update
-    }
+      await dbSet("canva_link", link);
+      await dbHistory(link, "api");
 
-    return res.status(200).json({ ok: true, link });
+      // Notif ke Telegram admin
+      try {
+        await tgSendMessage(
+          process.env.TELEGRAM_CHAT_ID,
+          `🔄 *Link Canva Diupdate*\n\n${link}\n\n_oleh: API (admin)_`
+        );
+      } catch {}
+
+      return res.status(200).json({ ok: true, link });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
   }
 
   return res.status(405).json({ ok: false, error: "Method not allowed" });

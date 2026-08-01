@@ -4,7 +4,7 @@
 // PUT → admin: set stok (Authorization: Bearer <ADMIN_SECRET>)
 // Frontend TIDAK lagi memakai localStorage untuk stok.
 // ============================================================
-import { kvGet, kvSet } from "./_lib/kv.js";
+import { dbGet, dbSet } from "./_lib/db.js";
 import { tgSendMessage } from "./_lib/telegram.js";
 
 export const config = { runtime: "nodejs" };
@@ -19,8 +19,12 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
 
   if (req.method === "GET") {
-    const stock = (await kvGet("canva:stock")) ?? DEFAULT_STOCK;
-    return res.status(200).json({ ok: true, stock });
+    try {
+      const raw = (await dbGet("canva_stock")) ?? String(DEFAULT_STOCK);
+      return res.status(200).json({ ok: true, stock: Number(raw) });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
   }
 
   if (req.method === "PUT") {
@@ -42,15 +46,18 @@ export default async function handler(req, res) {
       return res.status(400).json({ ok: false, error: "stock harus angka >= 0" });
     }
 
-    await kvSet("canva:stock", stock);
     try {
-      await tgSendMessage(
-        process.env.TELEGRAM_CHAT_ID,
-        `📦 *Stok Canva Diupdate*\n\nStok tersisa: *${stock}*`
-      );
-    } catch {}
-
-    return res.status(200).json({ ok: true, stock });
+      await dbSet("canva_stock", String(stock));
+      try {
+        await tgSendMessage(
+          process.env.TELEGRAM_CHAT_ID,
+          `📦 *Stok Canva Diupdate*\n\nStok tersisa: *${stock}*`
+        );
+      } catch {}
+      return res.status(200).json({ ok: true, stock });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
   }
 
   return res.status(405).json({ ok: false, error: "Method not allowed" });
