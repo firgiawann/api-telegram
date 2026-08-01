@@ -905,6 +905,17 @@
        ============================================================ -->
   <script>
     // ------------------------------------------------------------
+    // 00. PRODUCTION CONSOLE LOG GUARD (DevTools & Security Protection)
+    // Mencegah kebocoran data sensitif / log di DevTools saat live
+    // ------------------------------------------------------------
+    if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      console.log = function () {};
+      console.debug = function () {};
+      console.info = function () {};
+      console.warn = function () {};
+    }
+
+    // ------------------------------------------------------------
     // 01. KONFIGURASI & UTILS
     // ------------------------------------------------------------
     const API_BASE = "https://api-telegram.vercel.app";
