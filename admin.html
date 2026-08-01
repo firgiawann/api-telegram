@@ -1,327 +1,1503 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin Panel — Kuota Awan Bot</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: #f1f5f9;
-    color: #0f172a;
-    padding: 24px;
-    min-height: 100vh;
-  }
-  .container { max-width: 860px; margin: 0 auto; }
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; margin-bottom: 24px; flex-wrap: wrap;
-  }
-  header h1 { font-size: 22px; font-weight: 700; }
-  header .sub { font-size: 13px; color: #64748b; margin-top: 2px; }
-  .badge {
-    font-size: 12px; font-weight: 600; padding: 6px 12px;
-    border-radius: 999px; background: #dcfce7; color: #166534;
-  }
-  .badge.off { background: #fee2e2; color: #991b1b; }
-  .card {
-    background: #ffffff; border-radius: 16px; padding: 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
-    margin-bottom: 20px;
-  }
-  .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-  .card h2 .icon { font-size: 18px; }
-  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-  label { font-size: 12px; font-weight: 600; color: #475569; display: block; margin-bottom: 6px; }
-  input[type="text"], input[type="number"], input[type="password"] {
-    flex: 1; min-width: 220px; padding: 10px 14px; font-size: 14px;
-    border: 1px solid #cbd5e1; border-radius: 10px; outline: none;
-    background: #f8fafc; transition: border .15s;
-  }
-  input:focus { border-color: #2563eb; background: #fff; }
-  button {
-    padding: 10px 18px; font-size: 14px; font-weight: 600;
-    border: none; border-radius: 10px; cursor: pointer;
-    background: #2563eb; color: #fff; transition: background .15s, opacity .15s;
-    white-space: nowrap;
-  }
-  button:hover { background: #1d4ed8; }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  button.secondary { background: #e2e8f0; color: #334155; }
-  button.secondary:hover { background: #cbd5e1; }
-  button.danger { background: #dc2626; }
-  button.danger:hover { background: #b91c1c; }
-  .value-box {
-    background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px;
-    padding: 12px 14px; font-size: 13px; word-break: break-all; margin-bottom: 12px;
-    color: #334155;
-  }
-  .value-box b { color: #0f172a; }
-  .msg { font-size: 13px; margin-top: 10px; min-height: 18px; }
-  .msg.ok { color: #166534; }
-  .msg.err { color: #991b1b; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; }
-  th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
-  td { vertical-align: top; }
-  .truncate { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .empty { color: #94a3b8; font-size: 13px; padding: 16px 0; text-align: center; }
-  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
-  .toolbar .spacer { flex: 1; }
-  .login-box { text-align: center; padding: 40px 20px; }
-  .login-box p { color: #64748b; font-size: 14px; margin-bottom: 16px; }
-  .login-box input { max-width: 360px; margin: 0 auto; display: block; }
-  .login-box button { margin-top: 12px; }
-  .hidden { display: none !important; }
-  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
-  .stat { background: #f8fafc; border-radius: 12px; padding: 14px; }
-  .stat .num { font-size: 24px; font-weight: 800; color: #2563eb; }
-  .stat .lbl { font-size: 12px; color: #64748b; margin-top: 2px; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Admin — Kuota Awan Bot</title>
+  
+  <!-- Chart.js via CDN untuk visualisasi grafik analisa -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ============================================================
+       01. RESET & CSS VARIABLES (Sistem Desain Korporat Modern)
+       ============================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-input: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --border: #e2e8f0;
+      --border-focus: #2563eb;
+      --success: #16a34a;
+      --success-bg: #f0fdf4;
+      --success-border: #bbf7d0;
+      --error: #dc2626;
+      --error-bg: #fef2f2;
+      --error-border: #fecaca;
+      --radius-card: 16px;
+      --radius-btn: 10px;
+      --radius-input: 10px;
+      --radius-pill: 9999px;
+      --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 12px 0 rgba(15, 23, 42, 0.05);
+      --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+      --font-stack: 'Segoe UI', system-ui, -apple-system, Roboto, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-stack);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding: 24px 16px;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ============================================================
+       02. HEADER & STYLING UTAMA
+       ============================================================ */
+    header.main-header {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .header-title h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+    }
+
+    .header-title p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid var(--success-border);
+    }
+
+    .status-badge.logged-out {
+      background: var(--error-bg);
+      color: var(--error);
+      border-color: var(--error-border);
+    }
+
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: currentColor;
+    }
+
+    /* ============================================================
+       03. KOMPONEN KARTU (CARDS), GRID & FORM
+       ============================================================ */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title-icon {
+      color: var(--primary);
+    }
+
+    /* Grid Ringkasan (Stats) */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 500px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.1;
+      word-break: break-word;
+    }
+
+    .stat-value.primary-text {
+      color: var(--primary);
+    }
+
+    .stat-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Layout 2 Kolom untuk Update Link & Set Stok */
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .action-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Form Controls */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .input-control {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-main);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-input);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input-control:focus {
+      border-color: var(--border-focus);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .input-control::placeholder {
+      color: var(--text-light);
+    }
+
+    /* Active Link Box */
+    .current-link-box {
+      background: var(--bg-input);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-input);
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      word-break: break-all;
+    }
+
+    .current-link-text {
+      font-weight: 600;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      color: #ffffff;
+      background: var(--primary);
+      border: 1px solid transparent;
+      border-radius: var(--radius-btn);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--text-main);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--bg-input);
+    }
+
+    .btn-danger {
+      background: var(--error);
+      color: #ffffff;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #b91c1c;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+
+    /* ============================================================
+       04. LOG IN CARD
+       ============================================================ */
+    .login-wrapper {
+      max-width: 440px;
+      margin: 40px auto 0;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .login-header .icon-lock {
+      width: 56px;
+      height: 56px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 16px;
+    }
+
+    .login-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .login-header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ============================================================
+       05. TABEL DATA KLAIM & TOOLBAR
+       ============================================================ */
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      min-width: 220px;
+    }
+
+    .search-input-wrap input {
+      padding-left: 34px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      pointer-events: none;
+      font-size: 14px;
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #ffffff;
+    }
+
+    table.claims-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    table.claims-table th {
+      background: var(--bg-input);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.claims-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-main);
+      vertical-align: middle;
+    }
+
+    table.claims-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.claims-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .td-name {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .td-email {
+      color: var(--text-muted);
+    }
+
+    .badge-device {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: var(--bg-body);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      font-weight: 500;
+    }
+
+    .table-empty-state {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .table-empty-state svg {
+      width: 48px;
+      height: 48px;
+      color: var(--text-light);
+      margin-bottom: 12px;
+    }
+
+    .table-empty-state p {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* ============================================================
+       06. GRAFIK ANALISA
+       ============================================================ */
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 850px) {
+      .analytics-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-container {
+      position: relative;
+      height: 250px;
+      width: 100%;
+    }
+
+    /* ============================================================
+       07. TOAST NOTIFICATION & LOADING SPINNER
+       ============================================================ */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      min-width: 280px;
+      max-width: 400px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .toast-success {
+      background: var(--success);
+      color: #ffffff;
+    }
+
+    .toast-error {
+      background: var(--error);
+      color: #ffffff;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-<div class="container">
 
-  <header>
-    <div>
-      <h1>⚙️ Admin Panel — @KuotaAwanBot</h1>
-      <div class="sub">Kelola link Canva, stok, dan data klaim · API: api-telegram.vercel.app</div>
-    </div>
-    <span id="authBadge" class="badge off">🔒 Belum login</span>
-  </header>
+  <div class="app-container">
 
-  <!-- ===== LOGIN ===== -->
-  <div class="card login-box" id="loginCard">
-    <h2>🔐 Masukkan Admin Secret</h2>
-    <p>ADMIN_SECRET dari env Vercel — disimpan hanya di browser ini (localStorage).</p>
-    <input type="password" id="adminSecret" placeholder="ADMIN_SECRET..." autocomplete="off" />
-    <button onclick="doLogin()">Masuk</button>
-    <div class="msg" id="loginMsg"></div>
+    <!-- Header Utama Dashboard -->
+    <header class="main-header">
+      <div class="header-brand">
+        <div class="brand-icon">☁️</div>
+        <div class="header-title">
+          <h1>Admin Panel — @KuotaAwanBot</h1>
+          <p>Manajemen Klaim Canva Pro & Notifikasi Telegram</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <span id="authBadge" class="status-badge logged-out">
+          <span class="badge-dot"></span>
+          <span id="authBadgeText">Belum Login</span>
+        </span>
+        
+        <a href="https://firgiawann.github.io" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+          ↗ Buka Website
+        </a>
+
+        <button id="btnLogout" class="btn btn-danger btn-sm hidden" onclick="doLogout()">
+          Keluar
+        </button>
+      </div>
+    </header>
+
+
+    <!-- ============================================================
+         HALAMAN LOGIN (Tampil jika belum terautentikasi)
+         ============================================================ -->
+    <main id="loginView" class="login-wrapper">
+      <div class="card">
+        <div class="login-header">
+          <div class="icon-lock">🔐</div>
+          <h2>Masuk ke Dashboard</h2>
+          <p>Masukkan ADMIN_SECRET untuk mengakses panel admin.</p>
+        </div>
+
+        <form onsubmit="event.preventDefault(); doLogin();">
+          <div class="form-group">
+            <label for="adminSecretInput" class="form-label">Admin Secret Key</label>
+            <input 
+              type="password" 
+              id="adminSecretInput" 
+              class="input-control" 
+              placeholder="Masukkan secret key..." 
+              autocomplete="current-password"
+              required 
+            />
+          </div>
+
+          <button type="submit" id="btnLoginSubmit" class="btn" style="width: 100%;">
+            <span>Masuk Ke Dashboard</span>
+          </button>
+        </form>
+      </div>
+    </main>
+
+
+    <!-- ============================================================
+         DASHBOARD UTAMA (Tampil setelah berhasil login)
+         ============================================================ -->
+    <main id="dashboardView" class="hidden">
+
+      <!-- 1. KARTU RINGKASAN (STATS) -->
+      <section class="stats-grid">
+        <!-- Card 1: Stok Canva -->
+        <div class="stat-card">
+          <div class="stat-label">Stok Tersisa</div>
+          <div class="stat-value primary-text" id="statStock">—</div>
+          <div class="stat-subtext">Akun Canva Pro tersedia</div>
+        </div>
+
+        <!-- Card 2: Total Klaim -->
+        <div class="stat-card">
+          <div class="stat-label">Total Klaim</div>
+          <div class="stat-value" id="statTotalClaims">—</div>
+          <div class="stat-subtext">Keseluruhan transaksi</div>
+        </div>
+
+        <!-- Card 3: Klaim Hari Ini (Makassar WITA) -->
+        <div class="stat-card">
+          <div class="stat-label">Klaim Hari Ini</div>
+          <div class="stat-value" id="statTodayClaims">—</div>
+          <div class="stat-subtext">Zona waktu Asia/Makassar</div>
+        </div>
+
+        <!-- Card 4: Link Aktif Saat Ini -->
+        <div class="stat-card">
+          <div class="stat-label">Link Aktif</div>
+          <div class="stat-value" id="statLinkShort" style="font-size: 18px; font-weight: 700;" title="Hover untuk link lengkap">—</div>
+          <div class="stat-subtext" id="statLinkFull" title="">—</div>
+        </div>
+      </section>
+
+
+      <!-- 2. GABUNGAN UPDATE LINK & SET STOK -->
+      <div class="action-grid" style="margin-bottom: 24px;">
+
+        <!-- Form Update Link Canva -->
+        <section class="card" style="margin-bottom: 0;">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-title-icon">🔗</span> Update Link Canva
+            </h2>
+          </div>
+
+          <div class="current-link-box">
+            <span style="white-space: nowrap;">Aktif:</span>
+            <span class="current-link-text" id="currentLinkDisplay">Memuat link...</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="copyCurrentLink()" title="Salin Link">
+              📋 Salin
+            </button>
+          </div>
+
+          <form onsubmit="event.preventDefault(); updateLink();">
+            <div class="form-group">
+              <label for="inputNewLink" class="form-label">Link Undangan Canva Baru</label>
+              <div class="input-row">
+                <input 
+                  type="url" 
+                  id="inputNewLink" 
+                  class="input-control" 
+                  placeholder="https://www.canva.com/brand/join?token=..." 
+                  required 
+                />
+                <button type="submit" id="btnSaveLink" class="btn">
+                  <span>Simpan Link</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+        <!-- Form Set Stok Canva -->
+        <section class="card" style="margin-bottom: 0;">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-title-icon">📦</span> Kelola Stok
+            </h2>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="refreshDashboard(true)">
+              ↻ Refresh Data
+            </button>
+          </div>
+
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+            Set jumlah stok kuota Canva Pro yang bisa diklaim oleh pengunjung website.
+          </p>
+
+          <form onsubmit="event.preventDefault(); updateStock();">
+            <div class="form-group">
+              <label for="inputNewStock" class="form-label">Jumlah Stok Baru</label>
+              <div class="input-row">
+                <input 
+                  type="number" 
+                  id="inputNewStock" 
+                  class="input-control" 
+                  min="0" 
+                  placeholder="Contoh: 50" 
+                  required 
+                />
+                <button type="submit" id="btnSaveStock" class="btn">
+                  <span>Set Stok</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+
+      </div>
+
+
+      <!-- 3. GRAFIK ANALISA -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">📈</span> Analisa Klaim (500 Data Terakhir)
+          </h2>
+        </div>
+
+        <div class="analytics-grid">
+          <div>
+            <p style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">KLAIM PER HARI (7 HARI TERAKHIR)</p>
+            <div class="chart-container">
+              <canvas id="chartDailyClaims"></canvas>
+            </div>
+          </div>
+
+          <div>
+            <p style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">TOP 5 LOKASI PENGUNJUNG</p>
+            <div class="chart-container">
+              <canvas id="chartTopLocations"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- 4. TABEL DATA KLAIM -->
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-title-icon">👥</span> Data Pengunjung & Klaim
+          </h2>
+          <span id="claimsCountBadge" style="font-size: 13px; color: var(--text-muted); font-weight: 500;">
+            Menampilkan 0 data
+          </span>
+        </div>
+
+        <!-- Toolbar Tabel -->
+        <div class="table-toolbar">
+          <div class="toolbar-left">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="loadClaimsData()">
+              ↻ Muat Ulang Tabel
+            </button>
+
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted);">
+              <label for="selectClaimsLimit">Limit:</label>
+              <select id="selectClaimsLimit" class="input-control" style="padding: 6px 10px; width: 80px;" onchange="loadClaimsData()">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="toolbar-right">
+            <!-- Pencarian Teks -->
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input 
+                type="text" 
+                id="inputSearchClaims" 
+                class="input-control" 
+                placeholder="Cari nama, email, lokasi..." 
+                oninput="filterClaimsTable()"
+              />
+            </div>
+
+            <!-- Export CSV -->
+            <button type="button" id="btnExportCsv" class="btn btn-secondary btn-sm" onclick="exportCsv()">
+              ⬇ Export CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Container Tabel Responsive -->
+        <div class="table-container">
+          <table class="claims-table">
+            <thead>
+              <tr>
+                <th>Nama</th>
+                <th>Email</th>
+                <th>Lokasi / Perusahaan</th>
+                <th>IP Address</th>
+                <th>Perangkat</th>
+                <th>Waktu (WITA)</th>
+              </tr>
+            </thead>
+            <tbody id="claimsTableBody">
+              <!-- Diisi via JavaScript -->
+            </tbody>
+          </table>
+
+          <!-- State saat tabel kosong / loading -->
+          <div id="tableEmptyState" class="table-empty-state hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            <p id="emptyStateText">Belum ada data klaim yang tersimpan.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
   </div>
 
-  <!-- ===== DASHBOARD (setelah login) ===== -->
-  <div id="dash" class="hidden">
+  <!-- Container untuk Toast Notifications -->
+  <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Status ringkas -->
-    <div class="card">
-      <h2><span class="icon">📊</span> Ringkasan</h2>
-      <div class="stat-grid">
-        <div class="stat"><div class="num" id="statStock">—</div><div class="lbl">Stok tersisa</div></div>
-        <div class="stat"><div class="num" id="statClaims">—</div><div class="lbl">Total klaim</div></div>
-        <div class="stat"><div class="num" id="statLink" style="font-size:13px;word-break:break-all">—</div><div class="lbl">Link aktif</div></div>
-      </div>
-    </div>
 
-    <!-- Update link -->
-    <div class="card">
-      <h2><span class="icon">🔗</span> Update Link Canva</h2>
-      <div class="value-box">Link aktif saat ini: <b id="currentLink">—</b></div>
-      <div class="row">
-        <input type="text" id="newLink" placeholder="https://www.canva.com/brand/join?token=..." />
-        <button onclick="updateLink()" id="btnLink">Simpan Link</button>
-      </div>
-      <div class="msg" id="linkMsg"></div>
-    </div>
+  <!-- ============================================================
+       SCRIPT LOGIK APLIKASI
+       ============================================================ -->
+  <script>
+    // ------------------------------------------------------------
+    // 01. KONFIGURASI & UTILS
+    // ------------------------------------------------------------
+    const API_BASE = "https://api-telegram.vercel.app";
+    const STORAGE_KEY = "ka_admin_secret";
 
-    <!-- Set stok -->
-    <div class="card">
-      <h2><span class="icon">📦</span> Set Stok</h2>
-      <div class="row">
-        <input type="number" id="newStock" min="0" placeholder="cth: 100" style="min-width:140px" />
-        <button onclick="updateStock()" id="btnStock">Set Stok</button>
-        <button class="secondary" onclick="refreshAll()">↻ Muat ulang</button>
-      </div>
-      <div class="msg" id="stockMsg"></div>
-    </div>
+    let rawClaimsData = []; // Menyimpan raw data klaim dari API
+    let barChartInstance = null;
+    let doughnutChartInstance = null;
 
-    <!-- Data klaim -->
-    <div class="card">
-      <h2><span class="icon">👥</span> Data Klaim</h2>
-      <div class="toolbar">
-        <button class="secondary" onclick="loadClaims()">Muat data klaim</button>
-        <span style="font-size:12px;color:#64748b" id="claimsInfo"></span>
-        <span class="spacer"></span>
-        <button class="secondary" onclick="exportCsv()">⬇ Export CSV</button>
-      </div>
-      <div id="claimsWrap"><div class="empty">Klik "Muat data klaim" untuk melihat.</div></div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-const API = "https://api-telegram.vercel.app";
-
-function getSecret() { return localStorage.getItem("ka_admin_secret") || ""; }
-function setMsg(id, text, ok) {
-  const el = document.getElementById(id);
-  el.textContent = text;
-  el.className = "msg " + (ok ? "ok" : "err");
-  if (text) setTimeout(() => { el.textContent = ""; }, 5000);
-}
-function authHeaders() {
-  return { "Authorization": "Bearer " + getSecret(), "Content-Type": "application/json" };
-}
-
-function doLogin() {
-  const secret = document.getElementById("adminSecret").value.trim();
-  if (!secret) { setMsg("loginMsg", "Isi ADMIN_SECRET dulu.", false); return; }
-  localStorage.setItem("ka_admin_secret", secret);
-  document.getElementById("loginMsg").textContent = "";
-  enterDash();
-}
-
-async function enterDash() {
-  // Verifikasi secret dengan memanggil /api/claims
-  try {
-    const r = await fetch(API + "/api/claims?limit=1", { headers: authHeaders() });
-    if (r.status === 401) {
-      document.getElementById("authBadge").className = "badge off";
-      document.getElementById("authBadge").textContent = "🔒 Secret salah";
-      document.getElementById("loginCard").classList.remove("hidden");
-      document.getElementById("dash").classList.add("hidden");
-      setMsg("loginMsg", "ADMIN_SECRET salah. Coba lagi.", false);
-      return;
+    function getSecret() {
+      return localStorage.getItem(STORAGE_KEY) || "";
     }
-    document.getElementById("authBadge").className = "badge";
-    document.getElementById("authBadge").textContent = "✅ Terautentikasi";
-    document.getElementById("loginCard").classList.add("hidden");
-    document.getElementById("dash").classList.remove("hidden");
-    refreshAll();
-  } catch (e) {
-    setMsg("loginMsg", "Gagal konek API: " + e.message, false);
-  }
-}
 
-async function refreshAll() {
-  // Link
-  try {
-    const r = await fetch(API + "/api/canva-link");
-    const d = await r.json();
-    if (d.ok) {
-      document.getElementById("currentLink").textContent = d.link;
-      document.getElementById("statLink").textContent = d.link;
+    function setSecret(secret) {
+      localStorage.setItem(STORAGE_KEY, secret);
     }
-  } catch {}
-  // Stok
-  try {
-    const r = await fetch(API + "/api/canva-stock");
-    const d = await r.json();
-    if (d.ok) document.getElementById("statStock").textContent = d.stock;
-  } catch {}
-  // Total klaim
-  try {
-    const r = await fetch(API + "/api/claims?limit=1", { headers: authHeaders() });
-    const d = await r.json();
-    if (d.ok) document.getElementById("statClaims").textContent = d.total;
-  } catch {}
-}
 
-async function updateLink() {
-  const link = document.getElementById("newLink").value.trim();
-  if (!link) { setMsg("linkMsg", "Isi link dulu.", false); return; }
-  document.getElementById("btnLink").disabled = true;
-  try {
-    const r = await fetch(API + "/api/canva-link", {
-      method: "PUT",
-      headers: authHeaders(),
-      body: JSON.stringify({ link }),
+    function removeSecret() {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+
+    function getAuthHeaders() {
+      return {
+        "Authorization": `Bearer ${getSecret()}`,
+        "Content-Type": "application/json"
+      };
+    }
+
+    // Toast Notifications (Otomatis hilang 5 detik)
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type === "success" ? "toast-success" : "toast-error"}`;
+      toast.innerHTML = `
+        <span>${type === "success" ? "✅" : "❌"}</span>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(8px)";
+        setTimeout(() => toast.remove(), 200);
+      }, 5000);
+    }
+
+    // Helper Button Loading State
+    function setButtonLoading(buttonId, isLoading, loadingText = "Memproses...") {
+      const btn = document.getElementById(buttonId);
+      if (!btn) return;
+      
+      if (isLoading) {
+        btn.disabled = true;
+        btn.dataset.originalText = btn.innerHTML;
+        btn.innerHTML = `<span class="spinner"></span> <span>${loadingText}</span>`;
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.originalText) {
+          btn.innerHTML = btn.dataset.originalText;
+        }
+      }
+    }
+
+    // Formatting tanggal Asia/Makassar (WITA)
+    function formatMakassarDateTime(isoString) {
+      if (!isoString) return "-";
+      try {
+        const d = new Date(isoString);
+        return new Intl.DateTimeFormat('id-ID', {
+          timeZone: 'Asia/Makassar',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).format(d) + " WITA";
+      } catch (e) {
+        return isoString;
+      }
+    }
+
+    // Ambil string YYYY-MM-DD zona waktu Asia/Makassar
+    function getMakassarDateString(dateObj = new Date()) {
+      try {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Makassar',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).formatToParts(dateObj);
+        const y = parts.find(p => p.type === 'year').value;
+        const m = parts.find(p => p.type === 'month').value;
+        const d = parts.find(p => p.type === 'day').value;
+        return `${y}-${m}-${d}`;
+      } catch (e) {
+        return dateObj.toISOString().slice(0, 10);
+      }
+    }
+
+    // Hostname / Short URL helper
+    function getShortUrl(urlStr) {
+      if (!urlStr || urlStr === "—") return "—";
+      try {
+        const u = new URL(urlStr);
+        const shortPath = u.pathname.length > 12 ? u.pathname.slice(0, 12) + "…" : u.pathname;
+        return u.hostname + shortPath;
+      } catch (e) {
+        return urlStr.length > 20 ? urlStr.slice(0, 20) + "…" : urlStr;
+      }
+    }
+
+
+    // ------------------------------------------------------------
+    // 02. AUTHENTICATION & LOGIN FLOW
+    // ------------------------------------------------------------
+    async function doLogin() {
+      const input = document.getElementById("adminSecretInput");
+      const secret = input.value.trim();
+
+      if (!secret) {
+        showToast("Masukkan Admin Secret terlebih dahulu.", "error");
+        return;
+      }
+
+      setButtonLoading("btnLoginSubmit", true, "Verifikasi...");
+
+      try {
+        // Verifikasi token dengan memanggil /api/claims?limit=1
+        const res = await fetch(`${API_BASE}/api/claims?limit=1`, {
+          headers: { "Authorization": `Bearer ${secret}` }
+        });
+
+        if (res.status === 401) {
+          showToast("Admin Secret salah. Akses ditolak.", "error");
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error(`HTTP Error ${res.status}`);
+        }
+
+        // Login Berhasil
+        setSecret(secret);
+        showToast("Berhasil masuk ke dashboard admin.", "success");
+        initAuthenticatedUI();
+      } catch (err) {
+        showToast(`Gagal verifikasi login: ${err.message}`, "error");
+      } finally {
+        setButtonLoading("btnLoginSubmit", false);
+      }
+    }
+
+    function doLogout() {
+      removeSecret();
+      showToast("Anda telah keluar dari akun.", "success");
+      
+      // Update UI ke state logged out
+      document.getElementById("loginView").classList.remove("hidden");
+      document.getElementById("dashboardView").classList.add("hidden");
+      document.getElementById("btnLogout").classList.add("hidden");
+      
+      const badge = document.getElementById("authBadge");
+      badge.className = "status-badge logged-out";
+      document.getElementById("authBadgeText").textContent = "Belum Login";
+
+      document.getElementById("adminSecretInput").value = "";
+    }
+
+    function initAuthenticatedUI() {
+      document.getElementById("loginView").classList.add("hidden");
+      document.getElementById("dashboardView").classList.remove("hidden");
+      document.getElementById("btnLogout").classList.remove("hidden");
+
+      const badge = document.getElementById("authBadge");
+      badge.className = "status-badge";
+      document.getElementById("authBadgeText").textContent = "Terautentikasi";
+
+      // Load data dashboard pertama kali
+      refreshDashboard(false);
+    }
+
+
+    // ------------------------------------------------------------
+    // 03. FETCH & REFRESH DASHBOARD DATA
+    // ------------------------------------------------------------
+    async function refreshDashboard(showToastFeedback = false) {
+      if (showToastFeedback) {
+        showToast("Memperbarui data dashboard...", "success");
+      }
+
+      // Jalankan fetch paralel untuk kecepatan maksimal
+      await Promise.allSettled([
+        fetchActiveLink(),
+        fetchActiveStock(),
+        fetchClaimsTotalAndToday(),
+        loadClaimsData(),
+        fetchAnalyticsData()
+      ]);
+    }
+
+    // Ambil Link Canva Aktif
+    async function fetchActiveLink() {
+      try {
+        const res = await fetch(`${API_BASE}/api/canva-link`);
+        const data = await res.json();
+        if (data.ok && data.link) {
+          document.getElementById("currentLinkDisplay").textContent = data.link;
+          document.getElementById("statLinkShort").textContent = getShortUrl(data.link);
+          document.getElementById("statLinkShort").title = data.link;
+          document.getElementById("statLinkFull").textContent = data.link;
+          document.getElementById("statLinkFull").title = data.link;
+        }
+      } catch (e) {
+        console.error("Gagal mengambil active link:", e);
+      }
+    }
+
+    // Ambil Stok Canva Aktif
+    async function fetchActiveStock() {
+      try {
+        const res = await fetch(`${API_BASE}/api/canva-stock`);
+        const data = await res.json();
+        if (data.ok && data.stock !== undefined) {
+          document.getElementById("statStock").textContent = data.stock;
+        }
+      } catch (e) {
+        console.error("Gagal mengambil active stock:", e);
+      }
+    }
+
+    // Ambil Total Klaim & Klaim Hari Ini
+    async function fetchClaimsTotalAndToday() {
+      try {
+        // Ambil data klaim secukupnya untuk menghitung klaim hari ini
+        const res = await fetch(`${API_BASE}/api/claims?limit=200`, {
+          headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById("statTotalClaims").textContent = data.total;
+
+          // Hitung klaim hari ini berdasarkan zona waktu Asia/Makassar
+          const todayStr = getMakassarDateString(new Date());
+          const todayCount = (data.claims || []).filter(c => {
+            if (!c.created_at) return false;
+            return getMakassarDateString(new Date(c.created_at)) === todayStr;
+          }).length;
+
+          document.getElementById("statTodayClaims").textContent = todayCount;
+        }
+      } catch (e) {
+        console.error("Gagal mengambil ringkasan klaim:", e);
+      }
+    }
+
+
+    // ------------------------------------------------------------
+    // 04. UPDATE CANVA LINK & SET STOK
+    // ------------------------------------------------------------
+    async function updateLink() {
+      const input = document.getElementById("inputNewLink");
+      const newLink = input.value.trim();
+
+      if (!newLink || !newLink.startsWith("http")) {
+        showToast("Masukkan URL link Canva yang valid (diawali http/https).", "error");
+        return;
+      }
+
+      setButtonLoading("btnSaveLink", true, "Menyimpan...");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/canva-link`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ link: newLink })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          showToast("Link Canva berhasil diupdate & notifikasi terkirim!", "success");
+          input.value = "";
+          fetchActiveLink();
+        } else {
+          showToast(`Gagal: ${data.error || "Terjadi kesalahan"}`, "error");
+        }
+      } catch (err) {
+        showToast(`Gagal memperbarui link: ${err.message}`, "error");
+      } finally {
+        setButtonLoading("btnSaveLink", false);
+      }
+    }
+
+    function copyCurrentLink() {
+      const linkText = document.getElementById("currentLinkDisplay").textContent;
+      if (!linkText || linkText === "Memuat link..." || linkText === "—") return;
+
+      navigator.clipboard.writeText(linkText).then(() => {
+        showToast("Link Canva disalin ke clipboard!", "success");
+      }).catch(() => {
+        showToast("Gagal menyalin link secara otomatis.", "error");
+      });
+    }
+
+    async function updateStock() {
+      const input = document.getElementById("inputNewStock");
+      const stockVal = parseInt(input.value, 10);
+
+      if (isNaN(stockVal) || stockVal < 0) {
+        showToast("Masukkan angka stok yang valid (>= 0).", "error");
+        return;
+      }
+
+      setButtonLoading("btnSaveStock", true, "Menyimpan...");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/canva-stock`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ stock: stockVal })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          showToast(`Stok Canva berhasil diset ke ${data.stock}!`, "success");
+          input.value = "";
+          fetchActiveStock();
+        } else {
+          showToast(`Gagal: ${data.error || "Terjadi kesalahan"}`, "error");
+        }
+      } catch (err) {
+        showToast(`Gagal memperbarui stok: ${err.message}`, "error");
+      } finally {
+        setButtonLoading("btnSaveStock", false);
+      }
+    }
+
+
+    // ------------------------------------------------------------
+    // 05. MANAJEMEN TABEL DATA KLAIM & EXPORT
+    // ------------------------------------------------------------
+    async function loadClaimsData() {
+      const limit = document.getElementById("selectClaimsLimit").value || 50;
+      const tbody = document.getElementById("claimsTableBody");
+      const emptyState = document.getElementById("tableEmptyState");
+
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 24px; color: var(--text-muted);">
+            <span class="spinner"></span> Memuat data klaim...
+          </td>
+        </tr>
+      `;
+      emptyState.classList.add("hidden");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/claims?limit=${limit}`, {
+          headers: getAuthHeaders()
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          rawClaimsData = data.claims || [];
+          document.getElementById("claimsCountBadge").textContent = `Menampilkan ${rawClaimsData.length} dari ${data.total} klaim`;
+          filterClaimsTable(); // Render sesuai kata kunci pencarian saat ini
+        } else {
+          throw new Error(data.error || "Gagal memuat");
+        }
+      } catch (err) {
+        tbody.innerHTML = "";
+        emptyState.classList.remove("hidden");
+        document.getElementById("emptyStateText").textContent = `Gagal memuat data: ${err.message}`;
+        showToast(`Gagal memuat tabel klaim: ${err.message}`, "error");
+      }
+    }
+
+    function filterClaimsTable() {
+      const searchKeyword = (document.getElementById("inputSearchClaims").value || "").toLowerCase().trim();
+      const tbody = document.getElementById("claimsTableBody");
+      const emptyState = document.getElementById("tableEmptyState");
+
+      const filtered = rawClaimsData.filter(item => {
+        if (!searchKeyword) return true;
+        const name = (item.name || "").toLowerCase();
+        const email = (item.email || "").toLowerCase();
+        const loc = (item.location || "").toLowerCase();
+        const ip = (item.ip || "").toLowerCase();
+        return name.includes(searchKeyword) || email.includes(searchKeyword) || loc.includes(searchKeyword) || ip.includes(searchKeyword);
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = "";
+        emptyState.classList.remove("hidden");
+        document.getElementById("emptyStateText").textContent = searchKeyword ? "Tidak ada klaim yang cocok dengan pencarian." : "Belum ada data klaim.";
+        return;
+      }
+
+      emptyState.classList.add("hidden");
+      tbody.innerHTML = filtered.map(item => `
+        <tr>
+          <td class="td-name">${escapeHtml(item.name || "-")}</td>
+          <td class="td-email">${escapeHtml(item.email || "-")}</td>
+          <td>
+            <div>${escapeHtml(item.location || "-")}</div>
+            ${item.org ? `<div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(item.org)}</div>` : ''}
+          </td>
+          <td style="font-family: monospace; font-size: 12px;">${escapeHtml(item.ip || "-")}</td>
+          <td><span class="badge-device">${escapeHtml(item.device || item.platform || "-")}</span></td>
+          <td style="white-space: nowrap;">${formatMakassarDateTime(item.created_at)}</td>
+        </tr>
+      `).join("");
+    }
+
+    // Export CSV dengan Authorization Bearer via Blob
+    async function exportCsv() {
+      const limit = document.getElementById("selectClaimsLimit").value || 500;
+      setButtonLoading("btnExportCsv", true, "Exporting...");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/claims?format=csv&limit=${limit}`, {
+          headers: getAuthHeaders()
+        });
+
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+
+        const blob = await res.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = downloadUrl;
+        a.download = `canva-claims-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+        showToast("File CSV berhasil diunduh!", "success");
+      } catch (err) {
+        showToast(`Gagal export CSV: ${err.message}`, "error");
+      } finally {
+        setButtonLoading("btnExportCsv", false);
+      }
+    }
+
+
+    // ------------------------------------------------------------
+    // 06. GRAFIK ANALISA (CHART.JS)
+    // ------------------------------------------------------------
+    async function fetchAnalyticsData() {
+      try {
+        const res = await fetch(`${API_BASE}/api/claims?limit=500`, {
+          headers: getAuthHeaders()
+        });
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.claims)) {
+          renderCharts(data.claims);
+        }
+      } catch (e) {
+        console.error("Gagal memuat data grafik analisa:", e);
+      }
+    }
+
+    function renderCharts(claims) {
+      if (typeof Chart === "undefined") {
+        console.warn("Chart.js CDN belum/gagal dimuat.");
+        return;
+      }
+
+      // --- A. Hitung Klaim 7 Hari Terakhir (Asia/Makassar) ---
+      const last7DaysLabels = [];
+      const last7DaysMap = {};
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = getMakassarDateString(d);
+        
+        // Format label tanggal singkat (cth: 02 Ags)
+        const labelStr = new Intl.DateTimeFormat('id-ID', {
+          timeZone: 'Asia/Makassar',
+          day: '2-digit',
+          month: 'short'
+        }).format(d);
+
+        last7DaysLabels.push(labelStr);
+        last7DaysMap[dateStr] = 0;
+      }
+
+      claims.forEach(c => {
+        if (!c.created_at) return;
+        const cDateStr = getMakassarDateString(new Date(c.created_at));
+        if (last7DaysMap[cDateStr] !== undefined) {
+          last7DaysMap[cDateStr]++;
+        }
+      });
+
+      const dailyCounts = Object.values(last7DaysMap);
+
+      // Render Bar Chart
+      const ctxBar = document.getElementById("chartDailyClaims")?.getContext("2d");
+      if (ctxBar) {
+        if (barChartInstance) barChartInstance.destroy();
+        barChartInstance = new Chart(ctxBar, {
+          type: 'bar',
+          data: {
+            labels: last7DaysLabels,
+            datasets: [{
+              label: 'Jumlah Klaim',
+              data: dailyCounts,
+              backgroundColor: '#2563eb',
+              borderRadius: 6,
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 1 } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      }
+
+      // --- B. Hitung Top 5 Lokasi Pengunjung ---
+      const locationMap = {};
+      claims.forEach(c => {
+        const loc = (c.location || "Tidak Diketahui").trim();
+        locationMap[loc] = (locationMap[loc] || 0) + 1;
+      });
+
+      const sortedLocs = Object.entries(locationMap)
+        .sort((a, b) => b[1] - a[1]);
+
+      const top5Locs = sortedLocs.slice(0, 5);
+      const otherCount = sortedLocs.slice(5).reduce((acc, curr) => acc + curr[1], 0);
+
+      const doughnutLabels = top5Locs.map(item => item[0]);
+      const doughnutData = top5Locs.map(item => item[1]);
+
+      if (otherCount > 0) {
+        doughnutLabels.push("Lainnya");
+        doughnutData.push(otherCount);
+      }
+
+      // Render Doughnut Chart
+      const ctxDoughnut = document.getElementById("chartTopLocations")?.getContext("2d");
+      if (ctxDoughnut) {
+        if (doughnutChartInstance) doughnutChartInstance.destroy();
+        doughnutChartInstance = new Chart(ctxDoughnut, {
+          type: 'doughnut',
+          data: {
+            labels: doughnutLabels,
+            datasets: [{
+              data: doughnutData,
+              backgroundColor: ['#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#cbd5e1'],
+              borderWidth: 2,
+              borderColor: '#ffffff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+            }
+          }
+        });
+      }
+    }
+
+    // Helper Sanitasi HTML dasar
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+
+    // ------------------------------------------------------------
+    // 07. AUTO INIT ON PAGE LOAD
+    // ------------------------------------------------------------
+    document.addEventListener("DOMContentLoaded", () => {
+      const savedSecret = getSecret();
+      if (savedSecret) {
+        // Jika ada secret tersimpan di localStorage, langsung verifikasi
+        document.getElementById("adminSecretInput").value = savedSecret;
+        doLogin();
+      }
     });
-    const d = await r.json();
-    if (d.ok) {
-      setMsg("linkMsg", "✅ Link diupdate & notif dikirim ke Telegram.", true);
-      document.getElementById("currentLink").textContent = link;
-      document.getElementById("statLink").textContent = link;
-      document.getElementById("newLink").value = "";
-    } else {
-      setMsg("linkMsg", "❌ " + (d.error || "Gagal"), false);
-    }
-  } catch (e) { setMsg("linkMsg", "❌ " + e.message, false); }
-  document.getElementById("btnLink").disabled = false;
-}
-
-async function updateStock() {
-  const stock = parseInt(document.getElementById("newStock").value, 10);
-  if (isNaN(stock) || stock < 0) { setMsg("stockMsg", "Angka tidak valid.", false); return; }
-  document.getElementById("btnStock").disabled = true;
-  try {
-    const r = await fetch(API + "/api/canva-stock", {
-      method: "PUT",
-      headers: authHeaders(),
-      body: JSON.stringify({ stock }),
-    });
-    const d = await r.json();
-    if (d.ok) {
-      setMsg("stockMsg", "✅ Stok diset ke " + d.stock, true);
-      document.getElementById("statStock").textContent = d.stock;
-      document.getElementById("newStock").value = "";
-    } else {
-      setMsg("stockMsg", "❌ " + (d.error || "Gagal"), false);
-    }
-  } catch (e) { setMsg("stockMsg", "❌ " + e.message, false); }
-  document.getElementById("btnStock").disabled = false;
-}
-
-async function loadClaims() {
-  const wrap = document.getElementById("claimsWrap");
-  wrap.innerHTML = '<div class="empty">Memuat...</div>';
-  try {
-    const r = await fetch(API + "/api/claims?limit=100", { headers: authHeaders() });
-    const d = await r.json();
-    document.getElementById("claimsInfo").textContent = d.ok ? `${d.claims.length} dari ${d.total} klaim` : "";
-    if (!d.ok || !d.claims.length) {
-      wrap.innerHTML = '<div class="empty">Belum ada data klaim.</div>';
-      return;
-    }
-    const rows = d.claims.map(c => `
-      <tr>
-        <td class="truncate" title="${c.name}">${c.name || "-"}</td>
-        <td class="truncate" title="${c.email}">${c.email || "-"}</td>
-        <td class="truncate" title="${c.location}">${c.location || "-"}</td>
-        <td class="truncate">${c.ip || "-"}</td>
-        <td>${c.device || "-"}</td>
-        <td class="truncate" title="${new Date(c.created_at).toLocaleString("id-ID")}">${new Date(c.created_at).toLocaleString("id-ID")}</td>
-      </tr>`).join("");
-    wrap.innerHTML = `
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr><th>Nama</th><th>Email</th><th>Lokasi</th><th>IP</th><th>Device</th><th>Waktu</th></tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
-  } catch (e) {
-    wrap.innerHTML = '<div class="empty">Gagal memuat: ' + e.message + '</div>';
-  }
-}
-
-function exportCsv() {
-  const url = API + "/api/claims?format=csv&limit=1000";
-  const a = document.createElement("a");
-  a.href = url;
-  a.setAttribute("download", "canva-claims.csv");
-  // fetch dulu supaya bisa kirim header auth
-  fetch(url, { headers: authHeaders() })
-    .then(r => {
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.blob();
-    })
-    .then(blob => {
-      const obj = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = obj;
-      link.download = "canva-claims.csv";
-      link.click();
-      URL.revokeObjectURL(obj);
-    })
-    .catch(e => alert("Export gagal: " + e.message));
-}
-
-// Auto login kalau secret sudah tersimpan
-if (getSecret()) {
-  document.getElementById("adminSecret").value = "••••••••";
-  enterDash();
-}
-</script>
+  </script>
 </body>
 </html>

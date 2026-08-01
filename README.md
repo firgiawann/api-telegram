@@ -36,13 +36,19 @@ vercel login
 vercel --prod
 ```
 
-## Langkah 2 — Siapkan Supabase (3 tabel)
+## Langkah 2 — Siapkan Supabase (3 tabel, RLS aktif)
 
 1. Buka project Supabase kamu → **SQL Editor** → **New query**
 2. Paste isi **`supabase.sql`** → **Run**
    - Membuat tabel `settings` (key-value), `canva_history` (riwayat), `claims` (data user yang klaim)
    - Fungsi SQL `decrement_stock()` — stok berkurang ATOMIK di server (anti-cheat)
    - Mengisi default link & stok (ganti link-nya dulu di file kalau perlu)
+3. **RLS (Row Level Security) AKTIF** di semua tabel:
+   - `anon` & `authenticated` **tidak bisa** baca/tulis apa pun (ditolak RLS + privilege revoked)
+   - Hanya `service_role` (dipakai API server) yang bisa — jadi semua operasi API tetap jalan
+   - Tabel `claims` (PII: nama, email, IP) terkunci total, tidak ada policy baca publik
+   - Fungsi `decrement_stock()` hanya executable oleh `service_role` (anon tidak bisa menguras stok via RPC)
+   - ⚠️ Kalau kamu menguji langsung di **Supabase dashboard** (Table Editor), itu jalan karena pakai role postgres — bukan berarti RLS mati
 
 ## Langkah 3 — Set Environment Variables
 
