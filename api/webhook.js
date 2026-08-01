@@ -52,6 +52,13 @@ function cancelKeyboard() {
   };
 }
 
+// Tombol kembali ke menu utama (dipakai di semua tampilan hasil)
+function backKeyboard() {
+  return {
+    inline_keyboard: [[{ text: "🔙 Kembali ke Menu", callback_data: "menu" }]],
+  };
+}
+
 // ---------- Helpers ----------
 const adminId = () => String(process.env.TELEGRAM_CHAT_ID || "");
 const isAdmin = (chatId) => adminId() && String(chatId) === adminId();
@@ -84,9 +91,13 @@ async function handleCallback(cq, res) {
     }).catch(() => {});
 
   switch (data) {
+    case "menu": {
+      await edit("⚙️ *Menu Admin @KuotaAwanBot*\n\nPilih aksi di bawah:", adminMenuKeyboard());
+      break;
+    }
     case "link": {
       const link = (await dbGet("canva_link")) || process.env.CANVA_DEFAULT_LINK || "(belum ada)";
-      await edit(`🔗 *Link Canva Aktif:*\n\n${link}`);
+      await edit(`🔗 *Link Canva Aktif:*\n\n${link}`, backKeyboard());
       break;
     }
     case "ask_link": {
@@ -96,7 +107,7 @@ async function handleCallback(cq, res) {
     }
     case "stock": {
       const raw = (await dbGet("canva_stock")) ?? "—";
-      await edit(`📦 *Stok Canva tersisa:* ${raw}`);
+      await edit(`📦 *Stok Canva tersisa:* ${raw}`, backKeyboard());
       break;
     }
     case "ask_stock": {
@@ -107,7 +118,7 @@ async function handleCallback(cq, res) {
     case "claims": {
       const claims = await dbClaims(5);
       if (!claims.length) {
-        await edit("📭 Belum ada data klaim.");
+        await edit("📭 Belum ada data klaim.", backKeyboard());
       } else {
         const lines = claims.map(
           (c, i) =>
@@ -115,7 +126,7 @@ async function handleCallback(cq, res) {
             `   📍 ${c.location || "-"} · 🌐 ${c.ip || "-"}\n` +
             `   🕒 ${new Date(c.created_at).toLocaleString("id-ID")}`
         );
-        await edit(`👥 *5 Klaim Terbaru:*\n\n${lines.join("\n\n")}`);
+        await edit(`👥 *5 Klaim Terbaru:*\n\n${lines.join("\n\n")}`, backKeyboard());
       }
       break;
     }
@@ -123,7 +134,8 @@ async function handleCallback(cq, res) {
       const rawStock = (await dbGet("canva_stock")) ?? "—";
       const totalClaims = await dbClaimCount();
       await edit(
-        `📊 *Status Bot*\n\n▪️ Webhook: aktif\n▪️ Stok tersisa: ${rawStock}\n▪️ Total klaim: ${totalClaims}`
+        `📊 *Status Bot*\n\n▪️ Webhook: aktif\n▪️ Stok tersisa: ${rawStock}\n▪️ Total klaim: ${totalClaims}`,
+        backKeyboard()
       );
       break;
     }
@@ -175,7 +187,7 @@ async function handleMessage(msg, res) {
     await dbSet("pending_action", "none");
     await tgSendMessage(chatId, `✅ *Link Canva Diupdate!*\n\n${link}\n\nWebsite otomatis pakai link baru.`, {
       parse_mode: "Markdown",
-      reply_markup: adminMenuKeyboard(),
+      reply_markup: backKeyboard(),
     }).catch(() => {});
     return res.status(200).json({ ok: true });
   }
@@ -192,7 +204,7 @@ async function handleMessage(msg, res) {
     await dbSet("pending_action", "none");
     await tgSendMessage(chatId, `📦 *Stok di-set ke:* ${stock}`, {
       parse_mode: "Markdown",
-      reply_markup: adminMenuKeyboard(),
+      reply_markup: backKeyboard(),
     }).catch(() => {});
     return res.status(200).json({ ok: true });
   }

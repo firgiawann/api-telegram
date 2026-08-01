@@ -915,15 +915,15 @@
     let doughnutChartInstance = null;
 
     function getSecret() {
-      return localStorage.getItem(STORAGE_KEY) || "";
+      return sessionStorage.getItem(STORAGE_KEY) || "";
     }
 
     function setSecret(secret) {
-      localStorage.setItem(STORAGE_KEY, secret);
+      sessionStorage.setItem(STORAGE_KEY, secret);
     }
 
     function removeSecret() {
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
     }
 
     function getAuthHeaders() {
@@ -1119,7 +1119,6 @@
           document.getElementById("statLinkFull").title = data.link;
         }
       } catch (e) {
-        console.error("Gagal mengambil active link:", e);
       }
     }
 
@@ -1132,7 +1131,6 @@
           document.getElementById("statStock").textContent = data.stock;
         }
       } catch (e) {
-        console.error("Gagal mengambil active stock:", e);
       }
     }
 
@@ -1157,7 +1155,6 @@
           document.getElementById("statTodayClaims").textContent = todayCount;
         }
       } catch (e) {
-        console.error("Gagal mengambil ringkasan klaim:", e);
       }
     }
 
@@ -1362,13 +1359,12 @@
           renderCharts(data.claims);
         }
       } catch (e) {
-        console.error("Gagal memuat data grafik analisa:", e);
       }
     }
 
     function renderCharts(claims) {
       if (typeof Chart === "undefined") {
-        console.warn("Chart.js CDN belum/gagal dimuat.");
+        // Chart.js CDN belum dimuat — grafik dilewati (silent)
         return;
       }
 
