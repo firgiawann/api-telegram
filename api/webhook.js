@@ -38,6 +38,10 @@ function adminMenuKeyboard() {
         { text: "🎯 Set Stok", callback_data: "ask_stock" },
       ],
       [
+        { text: "⏳ Expired Date", callback_data: "expiry" },
+        { text: "📅 Set Expired", callback_data: "ask_expiry" },
+      ],
+      [
         { text: "👥 Klaim Terbaru", callback_data: "claims" },
         { text: "📊 Status", callback_data: "status" },
       ],
@@ -115,6 +119,16 @@ async function handleCallback(cq, res) {
       await edit("🎯 *Set Stok Canva*\n\nKirim angka stok baru (contoh: 100):", cancelKeyboard());
       break;
     }
+    case "expiry": {
+      const expiry = (await dbGet("canva_expiry")) || "2026-08-05T23:59:59+08:00";
+      await edit(`⏳ *Tanggal Expired Canva:* ${expiry}`, backKeyboard());
+      break;
+    }
+    case "ask_expiry": {
+      await dbSet("pending_action", "set_expiry");
+      await edit("📅 *Set Tanggal Expired Canva*\n\nKirim tanggal expired baru (contoh: 2026-08-10T23:59:59+08:00 atau 2026-08-10):", cancelKeyboard());
+      break;
+    }
     case "claims": {
       const claims = await dbClaims(5);
       if (!claims.length) {
@@ -132,9 +146,10 @@ async function handleCallback(cq, res) {
     }
     case "status": {
       const rawStock = (await dbGet("canva_stock")) ?? "—";
+      const rawExpiry = (await dbGet("canva_expiry")) ?? "2026-08-05T23:59:59+08:00";
       const totalClaims = await dbClaimCount();
       await edit(
-        `📊 *Status Bot*\n\n▪️ Webhook: aktif\n▪️ Stok tersisa: ${rawStock}\n▪️ Total klaim: ${totalClaims}`,
+        `📊 *Status Bot*\n\n▪️ Webhook: aktif\n▪️ Stok tersisa: ${rawStock}\n▪️ Expired date: ${rawExpiry}\n▪️ Total klaim: ${totalClaims}`,
         backKeyboard()
       );
       break;
@@ -203,6 +218,21 @@ async function handleMessage(msg, res) {
     await dbSet("canva_stock", String(stock));
     await dbSet("pending_action", "none");
     await tgSendMessage(chatId, `📦 *Stok di-set ke:* ${stock}`, {
+      parse_mode: "Markdown",
+      reply_markup: backKeyboard(),
+    }).catch(() => {});
+    return res.status(200).json({ ok: true });
+  }
+
+  if (pending === "set_expiry" && text && !text.startsWith("/")) {
+    let expVal = text;
+    // Format tanggal jika pengguna memasukkan YYYY-MM-DD saja
+    if (/^\d{4}-\d{2}-\d{2}$/.test(expVal)) {
+      expVal += "T23:59:59+08:00";
+    }
+    await dbSet("canva_expiry", expVal);
+    await dbSet("pending_action", "none");
+    await tgSendMessage(chatId, `📅 *Tanggal Expired Canva di-set ke:* ${expVal}\n\nWebsite otomatis menggunakan masa aktif baru.`, {
       parse_mode: "Markdown",
       reply_markup: backKeyboard(),
     }).catch(() => {});

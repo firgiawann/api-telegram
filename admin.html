@@ -242,10 +242,10 @@
       text-overflow: ellipsis;
     }
 
-    /* Layout 2 Kolom untuk Update Link & Set Stok */
+    /* Layout Responsive untuk Update Link, Set Stok & Expired Date */
     .action-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 24px;
     }
 
@@ -788,6 +788,37 @@
           </form>
         </section>
 
+        <!-- Form Set Tanggal Expired Canva -->
+        <section class="card" style="margin-bottom: 0;">
+          <div class="card-header">
+            <h2 class="card-title">
+              <span class="card-title-icon">⏳</span> Masa Aktif Expired
+            </h2>
+          </div>
+
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+            Expired saat ini: <strong id="currentExpiryDisplay" style="color: var(--primary);">Memuat...</strong>
+          </p>
+
+          <form onsubmit="event.preventDefault(); updateExpiry();">
+            <div class="form-group">
+              <label for="inputNewExpiry" class="form-label">Tanggal Expired Baru (YYYY-MM-DD / ISO)</label>
+              <div class="input-row">
+                <input 
+                  type="text" 
+                  id="inputNewExpiry" 
+                  class="input-control" 
+                  placeholder="2026-08-10T23:59:59+08:00" 
+                  required 
+                />
+                <button type="submit" id="btnSaveExpiry" class="btn">
+                  <span>Simpan Expired</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
+
       </div>
 
 
@@ -1111,6 +1142,7 @@
       await Promise.allSettled([
         fetchActiveLink(),
         fetchActiveStock(),
+        fetchActiveExpiry(),
         fetchClaimsTotalAndToday(),
         loadClaimsData(),
         fetchAnalyticsData()
@@ -1140,6 +1172,19 @@
         const data = await res.json();
         if (data.ok && data.stock !== undefined) {
           document.getElementById("statStock").textContent = data.stock;
+        }
+      } catch (e) {
+      }
+    }
+
+    // Ambil Expired Date Canva Aktif
+    async function fetchActiveExpiry() {
+      try {
+        const res = await fetch(`${API_BASE}/api/canva-expiry`);
+        const data = await res.json();
+        if (data.ok && data.expiry) {
+          const display = document.getElementById("currentExpiryDisplay");
+          if (display) display.textContent = data.expiry;
         }
       } catch (e) {
       }
@@ -1247,6 +1292,42 @@
         showToast(`Gagal memperbarui stok: ${err.message}`, "error");
       } finally {
         setButtonLoading("btnSaveStock", false);
+      }
+    }
+
+    async function updateExpiry() {
+      const input = document.getElementById("inputNewExpiry");
+      let expiryVal = input.value.trim();
+
+      if (!expiryVal) {
+        showToast("Masukkan tanggal expired baru.", "error");
+        return;
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(expiryVal)) {
+        expiryVal += "T23:59:59+08:00";
+      }
+
+      setButtonLoading("btnSaveExpiry", true, "Menyimpan...");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/canva-expiry`, {
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ expiry: expiryVal })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          showToast("Tanggal expired Canva berhasil diperbarui!", "success");
+          input.value = "";
+          fetchActiveExpiry();
+        } else {
+          showToast(`Gagal: ${data.error || "Terjadi kesalahan"}`, "error");
+        }
+      } catch (err) {
+        showToast(`Gagal memperbarui expired date: ${err.message}`, "error");
+      } finally {
+        setButtonLoading("btnSaveExpiry", false);
       }
     }
 
