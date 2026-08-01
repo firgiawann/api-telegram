@@ -7,16 +7,18 @@ Token bot AMAN di server, tidak pernah muncul di frontend lagi.
 
 ```
 Frontend (GitHub Pages)
-   │  POST /api/send-message {text}
+   │  POST /api/claim        → klaim Canva (simpan data + decrement stok)
    │  GET  /api/canva-link   → link Canva aktif
    ▼
 Vercel Serverless Functions
-   ├─ api/send-message.js   → forward ke Telegram (token di env)
+   ├─ api/send-message.js   → forward pesan kontak ke Telegram
+   ├─ api/claim.js          → simpan data klaim + decrement stok + notif
    ├─ api/canva-link.js     → GET link aktif / PUT update (admin)
    ├─ api/canva-stock.js    → GET stok / PUT set stok (admin)
-   └─ api/webhook.js        → terima perintah dari chat bot kamu
+   ├─ api/claims.js         → export data klaim JSON/CSV (admin)
+   └─ api/webhook.js        → perintah bot: /setlink /claims /setstock dll
    │
-   ├─ Supabase (Postgres): tabel settings + canva_history
+   ├─ Supabase (Postgres): settings, canva_history, claims
    └─ Telegram Bot API (token hanya di sini)
 ```
 
@@ -34,11 +36,12 @@ vercel login
 vercel --prod
 ```
 
-## Langkah 2 — Siapkan Supabase (2 tabel)
+## Langkah 2 — Siapkan Supabase (3 tabel)
 
 1. Buka project Supabase kamu → **SQL Editor** → **New query**
 2. Paste isi **`supabase.sql`** → **Run**
-   - Membuat tabel `settings` (key-value) & `canva_history` (riwayat)
+   - Membuat tabel `settings` (key-value), `canva_history` (riwayat), `claims` (data user yang klaim)
+   - Fungsi SQL `decrement_stock()` — stok berkurang ATOMIK di server (anti-cheat)
    - Mengisi default link & stok (ganti link-nya dulu di file kalau perlu)
 
 ## Langkah 3 — Set Environment Variables
@@ -93,9 +96,36 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 
 ### 5b. `index.html` — fungsi `submitKlaim()`
 
-Sama persis seperti 5a: ganti 3 baris `botToken/chatId/telegramUrl` dengan
-`const apiUrl = "https://<PROJECT>.vercel.app/api/send-message";`,
-ganti `fetch(telegramUrl, {` → `fetch(apiUrl, {`, hapus `chat_id: chatId,`.
+**Ganti** (3 baris token + chatId + telegramUrl):
+```js
+        const botToken = "8430081251:XXX";
+        const chatId = "2010496733";
+        const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+```
+**Dengan:**
+```js
+        const apiUrl = "https://<PROJECT>.vercel.app/api/claim";
+```
+
+**Ganti** `return fetch(telegramUrl, {` → `return fetch(apiUrl, {`
+
+**Ganti body** (kirim data terstruktur, bukan text telegram):
+```js
+              body: JSON.stringify({
+                name,
+                email,
+                ip: geo?.ip || "",
+                location: geo ? `${geo.city || "-"}, ${geo.region || "-"}, ${geo.country_name || "-"}` : "",
+                org: geo?.org || "",
+                device: deviceType,
+                platform: platform,
+                user_agent: userAgent,
+              }),
+```
+
+⚠️ Perhatikan: di `submitKlaim()` variabel `geo`, `deviceType`, `platform`, `userAgent` **harus sudah ada** di scope fungsi itu. Cek blok `fetch("https://ipapi.co/json/")` di kode kamu — kalau belum ada, pindahkan deklarasi `userAgent`, `platform`, `deviceType` ke atas fungsi, dan pastikan `.then(geo => {...})` membungkus seluruh fetch. Kalau tidak yakin, tempel kode `submitKlaim()` kamu ke chat AI / ke sini, nanti saya rapikan.
+
+**Response baru**: `{ ok: true, stock }` — setelah sukses, stok terbaru ada di `data.stock` (bukan `localStorage` lagi).
 
 ### 5c. `index.html` — link Canva jadi DINAMIS
 
@@ -130,7 +160,31 @@ Chat ke @KuotaAwanBot (dari akun admin kamu):
 | `/link` | Lihat link Canva aktif |
 | `/setlink https://...` | **Update link Canva** (langsung aktif di website) |
 | `/history` | 5 update link terakhir |
-| `/status` | Status bot & stok |
+| `/claims` | 5 klaim terbaru (nama, email, lokasi, IP) |
+| `/setstock <n>` | Set stok (mis. `/setstock 100`) |
+| `/status` | Status bot, stok, total klaim |
+
+## Analisa data klaim (export JSON/CSV)
+
+Data user yang klaim (nama, email, IP, lokasi, ISP, device, waktu) tersimpan di tabel `claims`.
+Export kapan saja:
+
+```bash
+# JSON
+curl "https://<PROJECT>.vercel.app/api/claims?limit=500" \
+  -H "Authorization: Bearer <ADMIN_SECRET>"
+
+# CSV — buka di Excel/Google Sheets
+curl "https://<PROJECT>.vercel.app/api/claims?format=csv&limit=500" \
+  -H "Authorization: Bearer <ADMIN_SECRET>" -o claims.csv
+```
+
+Atau langsung lihat di Supabase dashboard: **Table Editor → claims**.
+Bisa juga pakai Supabase SQL untuk analisa (mis. klaim per hari, kota terbanyak):
+```sql
+select date_trunc('day', created_at) as hari, count(*) as klaim
+from public.claims group by 1 order by 1 desc;
+```
 
 ## Update link via API (opsional, untuk skrip/dashboard)
 

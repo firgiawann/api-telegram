@@ -57,3 +57,36 @@ export async function dbHistoryList(limit = 5) {
   if (error) throw new Error(`dbHistoryList gagal: ${error.message}`);
   return data || [];
 }
+
+// Panggil fungsi SQL (mis. decrement_stock)
+export async function dbRpc(fnName) {
+  const { data, error } = await ensureDb().rpc(fnName);
+  if (error) throw new Error(`dbRpc(${fnName}) gagal: ${error.message}`);
+  return data;
+}
+
+// Insert data klaim
+export async function dbInsertClaim(claim) {
+  const { error } = await ensureDb().from("claims").insert(claim);
+  if (error) throw new Error(`dbInsertClaim gagal: ${error.message}`);
+}
+
+// Ambil data klaim terbaru
+export async function dbClaims(limit = 10) {
+  const { data, error } = await ensureDb()
+    .from("claims")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(`dbClaims gagal: ${error.message}`);
+  return data || [];
+}
+
+// Total jumlah klaim
+export async function dbClaimCount() {
+  const { count, error } = await ensureDb()
+    .from("claims")
+    .select("*", { count: "exact", head: true });
+  if (error) throw new Error(`dbClaimCount gagal: ${error.message}`);
+  return count || 0;
+}
